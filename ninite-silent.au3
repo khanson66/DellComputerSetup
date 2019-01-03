@@ -3,7 +3,7 @@
 #AutoIt3Wrapper_icon=AutoItv11.ico
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
-#source from http://cramaboule.com/index.php/silent-ninite
+;source from http://cramaboule.com/index.php/silent-ninite
 
 
 
