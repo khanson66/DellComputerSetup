@@ -60,9 +60,11 @@ cd $PSScriptRoot
 #-----------------------------------------removes previously created task---------------------------------------------------
 
 #using taskname
-
-Unregister-ScheduledTask -TaskName $taskname -Confirm:$false
-
+$taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
+Write-Host $taskexist
+if($taskexist){
+  Unregister-ScheduledTask -TaskName $taskname -Confirm:$false
+}
 
 #---------------------------------------------------------------------------------------------------------------------------
 
@@ -74,12 +76,12 @@ download button and copying url. writes it to ninite.exe #>
 #name of downloaded program
 $ProgInstaller = "ninite.exe"
 write-host "Ninite downloading"
-#downloads ninite installer (TODO: figure out a selector of sorts)
-wget -outf $ProgInstaller https://ninite.com/.net4.7.2-7zip-air-chrome-firefox-java8-shockwave-silverlight-vlc/ninite.exe
+#downloads ninite installer (TODO: figure out a selector of sorts order for part below does not matter)
+Invoke-WebRequest -outf $ProgInstaller https://ninite.com/.net4.7.2-7zip-air-chrome-firefox-java8-shockwave-silverlight-vlc/ninite.exe
 Start-Process .\$ProgInstaller
 #runs the ninite installer and closes it when done. run autoit script in exe form
 write-host "Ninite installing"
-Start-Process .\niniteauto.exe -Wait
+Start-Process ".\niniteauto.exe" -WarningAction SilentlyContinue -Wait
 write-host "Ninite successfully installed"
 #--------------------------------------------------------------------------------------------------------------------------- 
 
@@ -88,27 +90,26 @@ write-host "Ninite successfully installed"
 Write-Host "Checking if Dell Command is installed"
 
 #checks to see if Dell Command | Update is installed, if not it is installed
+#set the the name for the setup file
 $DellC = "dellcommand.exe"
 if(Check_Program_Installed('Dell Command | Update')){
     write-host "Downloading Dell Command Update"
+    
     #downloads dellcommand and names it
-
-    wget -outf $DellC https://downloads.dell.com/FOLDER05055451M/1/Dell-Command-Update_DDVDP_WIN_2.4.0_A00.EXE
+    Invoke-WebRequest -outf $DellC https://downloads.dell.com/FOLDER05055451M/1/Dell-Command-Update_DDVDP_WIN_2.4.0_A00.EXE
     
     Write-host " installing Dell Command Update"
 
-    .\$DellC /s
+    #runs dell setup for dell command silently
+    Start-Process ".\$DellC /s" -WarningAction SilentlyContinue -Wait
     
+    #alls windows to update that it exists
+    Write-host "setting up install"
+    Start-Sleep 10
      
 }
 #---------------------------------------------------------------------------------------------------------------------------
 
-
-
-#-----------------------------------------Break to allow windows to update manifests----------------------------------------
-Write-host "setting up"
-Start-Sleep 15
-#---------------------------------------------------------------------------------------------------------------------------
 
 
 
@@ -119,13 +120,11 @@ if(Bitlockerstatus){
     <#if active suspends bitlocker and runs Dell Command Update. This is done incase of a bios update. If no restart happens
     then bitlocker is resumed as normal#>
     Suspend-BitLocker -MountPoint "C:" -RebootCount 0
-    write-host "bitlocker suspended"
-    write-host " "
-    write-host " "
+    write-host "\n bitlocker suspended"
+
     invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /reboot /log C:\"
-    write-host " "
-    write-host " "
-    write-host "bitlocker resumed"
+    
+    write-host "\n bitlocker resumed"
     Resume-BitLocker -MountPoint "C:"
 
 }else{

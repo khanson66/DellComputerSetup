@@ -20,10 +20,15 @@ if ((Check-Admin) -eq $false)  {
 }
 #---------------------------------------------------------------------------------------------------------------------------
 $compname = read-host -prompt "Please get the computername for the new computer. CHECK AD!" 
+$taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
+Write-Host $taskexist
+if (!$taskexist){
+  $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-command $PSScriptRoot\ProgramsDrivers.ps1 -taskname $taskname"
+  $trigger = New-ScheduledTaskTrigger -AtLogOn
+  Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Description "runs to install programs and drivers" -RunLevel Highest
+  Write-Host "task created"
+}
 
-$task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-command $PSScriptRoot\ProgramsDrivers.ps1 -taskname $taskname"
-$trigger = New-ScheduledTaskTrigger -AtLogOn
-Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Description "runs to install programs and drivers" -RunLevel Highest
 Add-Computer -DomainName "pace.edu" -NewName $compname  -restart -whatif
 
  
