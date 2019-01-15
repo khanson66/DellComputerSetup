@@ -3,12 +3,12 @@
 #Must be the first part of program
 param([switch]$Elevated,[string]$taskname = "programsdrivers")
 #checks to see if user is admin
-function Check-Admin {
+function CheckAdmin {
     $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
     $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 #runs if the current session is not running as admin
-if ((Check-Admin) -eq $false)  {
+if ((CheckAdmin) -eq $false)  {
     #if when the program is rerun it is not as admin it fails
     if ($elevated){
         write-host "could not elevate, please quit"
@@ -26,7 +26,7 @@ if ((Check-Admin) -eq $false)  {
 function Check_Program_Installed( $programName ) {
 
     #runs query to get all the objects with the name inputed the number of objects which is measured and counted 
-    $wmi_check = (Get-WMIObject -Query "SELECT * FROM Win32_Product Where Name Like '$programName'" | measure).count 
+    $wmi_check = (Get-WMIObject -Query "SELECT * FROM Win32_Product Where Name Like '$programName'" | measure-object).count 
 
     # if there are no object 0 is the returned by the above statment and the function returns true else false
     if($wmi_check -like "0"){
@@ -55,7 +55,7 @@ function Bitlockerstatus{
 
 #assures that the current directory pointer is in the CSOSetup folder
 write-host $PSScriptRoot
-cd $PSScriptRoot
+Set-Location $PSScriptRoot
 
 #-----------------------------------------removes previously created task---------------------------------------------------
 
