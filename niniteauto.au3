@@ -4,12 +4,6 @@
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****source from http://cramaboule.com/index.php/silent-ninite
 
 
-
-
-
-
-
-
 While 1
 
    $text = WinGetText("Ninite", "")

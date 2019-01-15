@@ -1,9 +1,14 @@
 ﻿
 #-----------------------------------------this obtains admin privialages----------------------------------------------------
 #Must be the first part of program
-param([switch]$Elevated,[string]$taskname = "programsdrivers")
-#checks to see if user is admin
+param([switch]$Elevated,                #used with checkadmin to denote if the program failed to elevate
+[string]$taskname = "programsdrivers",  #control the taskname used in the windows schedule and allows name to pass through restart
+[switch]$AddAD                          #if called the program names and add computer to Active Directory after restart 
+)
+
+
 function CheckAdmin {
+    #checks to see if user is admin
     $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
     $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
@@ -21,10 +26,9 @@ if ((CheckAdmin) -eq $false)  {
 }
 #---------------------------------------------------------------------------------------------------------------------------
 
-
 #-----------------------------------------checks to see is called program is installed--------------------------------------
 function Check_Program_Installed( $programName ) {
-
+    
     #runs query to get all the objects with the name inputed the number of objects which is measured and counted 
     $wmi_check = (Get-WMIObject -Query "SELECT * FROM Win32_Product Where Name Like '$programName'" | measure-object).count 
 
@@ -39,7 +43,7 @@ function Check_Program_Installed( $programName ) {
 #---------------------------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------checks to see is bitlocker is active and at 100%----------------------------------
-function Bitlockerstatus{
+function Bitlocker_status{
 
     # loads bitlocker volume on the C drive to the varible
     $BLactive = Get-Bitlockervolume -MountPoint "C:"
@@ -57,15 +61,13 @@ function Bitlockerstatus{
 write-host $PSScriptRoot
 Set-Location $PSScriptRoot
 
-#-----------------------------------------removes previously created task---------------------------------------------------
 
-#using taskname
-$taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
-Write-Host $taskexist
-if($taskexist){
-  Unregister-ScheduledTask -TaskName $taskname -Confirm:$false
+#-----------------------------------------Runs if AddAD Switch is called----------------------------------------------------
+if ($AddAD){
+    $userCred = Get-Credential 
+    $compName = read-host -prompt "Please get the computername for the new computer. CHECK AD!"
+       
 }
-
 #---------------------------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------Downloads and runs Ninite---------------------------------------------------------
@@ -109,19 +111,26 @@ if(Check_Program_Installed('Dell Command | Update')){
      
 }
 #---------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
+#-----------------------------------------Creates task to run after reboot--------------------------------------------------
+$taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
+Write-Host $taskexist
+if (!$taskexist){
+    $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-command $PSScriptRoot\SetupAD.ps1 -taskname $taskname -Credential $userCred"
+    $trigger = New-ScheduledTaskTrigger -AtLogOn
+    Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Description "runs to install programs and drivers" -RunLevel Highest
+    Write-Host "task created"
+}
+#---------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------Runs Dell Command Update----------------------------------------------------------
 # checks if bitlocker is active
-if(Bitlockerstatus){
+if(Bitlocker_status){
     <#if active suspends bitlocker and runs Dell Command Update. This is done incase of a bios update. If no restart happens
     then bitlocker is resumed as normal#>
     Suspend-BitLocker -MountPoint "C:" -RebootCount 0
     write-host "\n bitlocker suspended"
 
+    
+    
     invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /reboot /log C:\"
     
     write-host "\n bitlocker resumed"
@@ -129,8 +138,8 @@ if(Bitlockerstatus){
 
 }else{
     #If no bitlocker run Dell Command Update with out care
-    invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /reboot /log C:\"
-    
+    invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /log C:\"
+    Restart-Computer
 }
 
 #---------------------------------------------------------------------------------------------------------------------------s

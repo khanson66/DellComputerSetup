@@ -1,13 +1,17 @@
 ﻿#-----------------------------------------this obtains admin privialages----------------------------------------------------
 #Must be the first part of program
-param([switch]$Elevated,[string]$taskname = "programsdrivers")
+param([switch]$Elevated,
+[string]$taskname = "programsdrivers",
+[pscredential]$credential,
+[string] $compName
+)
 #checks to see if user is admin
-function Check-Admin {
+function CheckAdmin {
     $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
     $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 #runs if the current session is not running as admin
-if ((Check-Admin) -eq $false)  {
+if ((CheckAdmin) -eq $false)  {
     #if when the program is rerun it is not as admin it fails
     if ($elevated){
         write-host "could not elevate, please quit"
@@ -19,16 +23,28 @@ if ((Check-Admin) -eq $false)  {
     exit
 }
 #---------------------------------------------------------------------------------------------------------------------------
-$compname = read-host -prompt "Please get the computername for the new computer. CHECK AD!" 
+#-----------------------------------------removes previously created task---------------------------------------------------
+
+#using taskname
 $taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
 Write-Host $taskexist
-if (!$taskexist){
-  $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-command $PSScriptRoot\ProgramsDrivers.ps1 -taskname $taskname"
-  $trigger = New-ScheduledTaskTrigger -AtLogOn
-  Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Description "runs to install programs and drivers" -RunLevel Highest
-  Write-Host "task created"
+if($taskexist){
+  Unregister-ScheduledTask -TaskName $taskname -Confirm:$false
 }
 
-Add-Computer -DomainName "pace.edu" -NewName $compname  -restart -whatif
+#---------------------------------------------------------------------------------------------------------------------------
+
+try{
+    Add-Computer -DomainName "pace.edu" -NewName $compName -restart 
+}Catch{
+    #this might contain errors.
+    #TODO:find a error correction portion
+    Write-host "An error has occured" -ForegroundColor Red
+    $compName = read-host -prompt "Please get the computername for the new computer. CHECK AD!" 
+    add-Computer -DomainName "pace.edu" -NewName $compname -restart
+}
+
+
+
 
  
