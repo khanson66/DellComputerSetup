@@ -2,8 +2,9 @@
 #Must be the first part of program
 param([switch]$Elevated,
 [string]$taskname = "programsdrivers",
-[pscredential]$credential,
-[string] $compName
+[string] $compName,
+[securestring] $pass,
+[string] $uname
 )
 #checks to see if user is admin
 function CheckAdmin {
@@ -35,6 +36,15 @@ if($taskexist){
 #---------------------------------------------------------------------------------------------------------------------------
 
 try{
+<<<<<<< HEAD
+=======
+    $credential = $null
+    if ($uname -notlike $null -and $pass -notlike $null){
+        $credential = New-Object System.Management.Automation.PSCredential($uname,$pass)
+    }else{
+        $credential = Get-Credential
+    }
+>>>>>>> reverseprocess
     Add-Computer -DomainName "pace.edu" -NewName $compName -Credential $credential -restart 
 }Catch{
     #this might contain errors.
