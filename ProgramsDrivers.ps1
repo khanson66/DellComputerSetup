@@ -113,7 +113,7 @@ if(Check_Program_Installed('Dell Command | Update')){
     Write-host " installing Dell Command Update"
 
     #runs dell setup for dell command silently
-    Start-Process ".\$DellC /s" -WarningAction SilentlyContinue -Wait
+    Start-Process $DellC -WarningAction SilentlyContinue -Wait -ArgumentList "/s"
     
     #alls windows to update that it exists
     Write-host "setting up install"
