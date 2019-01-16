@@ -3,7 +3,7 @@
 param([switch]$Elevated,
 [string]$taskname = "programsdrivers",
 [string] $compName,
-[securestring] $pass,
+[string] $pass,
 [string] $uname
 )
 #checks to see if user is admin
