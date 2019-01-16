@@ -35,7 +35,7 @@ if($taskexist){
 #---------------------------------------------------------------------------------------------------------------------------
 
 try{
-    Add-Computer -DomainName "pace.edu" -NewName $compName -restart 
+    Add-Computer -DomainName "pace.edu" -NewName $compName -Credential $credential -restart 
 }Catch{
     #this might contain errors.
     #TODO:find a error correction portion
