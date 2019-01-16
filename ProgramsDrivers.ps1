@@ -67,7 +67,7 @@ Set-Location $PSScriptRoot
 if ($AddAD){
     $userCred = Get-Credential
     $uname = $userCred.UserName
-    $pass = $userCred.Password.IsReadOnly($true)
+    $pass = Convertfrom-securestring $userCred.Password -SecureString
     $compName = read-host -prompt "Please get the computername for the new computer. CHECK AD!"
     $taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
     
