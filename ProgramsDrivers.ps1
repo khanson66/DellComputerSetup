@@ -58,6 +58,7 @@ function Bitlocker_status{
 #---------------------------------------------------------------------------------------------------------------------------
 
 #assures that the current directory pointer is in the CSOSetup folder
+Write-host "Beginnging installation" -ForegroundColor Red
 write-host $PSScriptRoot
 Set-Location $PSScriptRoot
 
@@ -66,7 +67,16 @@ Set-Location $PSScriptRoot
 if ($AddAD){
     $userCred = Get-Credential 
     $compName = read-host -prompt "Please get the computername for the new computer. CHECK AD!"
-       
+    $taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
+    
+    Write-Host $taskexist
+    if (!$taskexist){
+        $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-command $PSScriptRoot\SetupAD.ps1 -taskname $taskname -Credential $userCred -CompName $compName"
+        $trigger = New-ScheduledTaskTrigger -AtLogOn
+        Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Description "runs to install programs and drivers" -RunLevel Highest
+        Write-Host "task created"
+    }
+   
 }
 #---------------------------------------------------------------------------------------------------------------------------
 
@@ -109,16 +119,6 @@ if(Check_Program_Installed('Dell Command | Update')){
     Write-host "setting up install"
     Start-Sleep 10
      
-}
-#---------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------Creates task to run after reboot--------------------------------------------------
-$taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
-Write-Host $taskexist
-if (!$taskexist){
-    $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-command $PSScriptRoot\SetupAD.ps1 -taskname $taskname -Credential $userCred"
-    $trigger = New-ScheduledTaskTrigger -AtLogOn
-    Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Description "runs to install programs and drivers" -RunLevel Highest
-    Write-Host "task created"
 }
 #---------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------Runs Dell Command Update----------------------------------------------------------
