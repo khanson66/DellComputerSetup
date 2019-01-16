@@ -71,7 +71,7 @@ if ($AddAD){
     
     Write-Host $taskexist
     if (!$taskexist){
-        $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-command $PSScriptRoot\SetupAD.ps1 -taskname $taskname -Credential $userCred -CompName $compName"
+        $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-noexit -ExecutionPolicy Bypass -Command $PSScriptRoot\SetupAD.ps1 -taskname $taskname -Credential $userCred -CompName $compName"
         $trigger = New-ScheduledTaskTrigger -AtLogOn
         Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Description "runs to install programs and drivers" -RunLevel Highest
         Write-Host "task created"
