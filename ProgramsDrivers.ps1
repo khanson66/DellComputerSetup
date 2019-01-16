@@ -65,13 +65,15 @@ Set-Location $PSScriptRoot
 
 #-----------------------------------------Runs if AddAD Switch is called----------------------------------------------------
 if ($AddAD){
-    $userCred = Get-Credential 
+    $userCred = Get-Credential
+    $uname = $userCred.UserName
+    $pass = $userCred.Password.IsReadOnly($true)
     $compName = read-host -prompt "Please get the computername for the new computer. CHECK AD!"
     $taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
     
     Write-Host $taskexist
     if (!$taskexist){
-        $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-noexit -ExecutionPolicy Bypass -Command $PSScriptRoot\SetupAD.ps1 -taskname $taskname -Credential $userCred -CompName $compName"
+        $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-noexit -ExecutionPolicy Bypass -Command $PSScriptRoot\SetupAD.ps1 -taskname $taskname  -CompName $compName -uname $uname -pass $pass"
         $trigger = New-ScheduledTaskTrigger -AtLogOn
         Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Description "runs to install programs and drivers" -RunLevel Highest
         Write-Host "task created"
