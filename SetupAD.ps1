@@ -35,22 +35,22 @@ if($taskexist){
 
 #---------------------------------------------------------------------------------------------------------------------------
 
-try{
+
     $credential = $null
     if ($uname -notlike $null -and $pass -notlike $null){
-        
-        $credential = New-Object System.Management.Automation.PSCredential($uname,$upass)
+        $upass = ConvertTo-SecureString $pass
+        $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $uname,$upass 
     }else{
         $credential = Get-Credential
     }
     Add-Computer -DomainName "pace.edu" -NewName $compName -Credential $credential -restart 
-}Catch{
+
     #this might contain errors.
     #TODO:find a error correction portion
     Write-host "An error has occured" -ForegroundColor Red
     $compName = read-host -prompt "Please get the computername for the new computer. CHECK AD!" 
     add-Computer -DomainName "pace.edu" -NewName $compname -restart
-}
+
 
 
 
