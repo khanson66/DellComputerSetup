@@ -38,7 +38,8 @@ if($taskexist){
 try{
     $credential = $null
     if ($uname -notlike $null -and $pass -notlike $null){
-        $credential = New-Object System.Management.Automation.PSCredential($uname,$pass)
+        $upass = ConvertFrom-SecureString $pass
+        $credential = New-Object System.Management.Automation.PSCredential($uname,$upass)
     }else{
         $credential = Get-Credential
     }
