@@ -129,15 +129,19 @@ if(Bitlocker_status){
     <#if active suspends bitlocker and runs Dell Command Update. This is done incase of a bios update. If no restart happens
     then bitlocker is resumed as normal#>
     Suspend-BitLocker -MountPoint "C:" -RebootCount 0
-    write-host "\n bitlocker suspended"
+    write-host "bitlocker suspended"
 
     
     
     invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /reboot /log C:\"
     
-    write-host "\n bitlocker resumed"
+    
     Resume-BitLocker -MountPoint "C:"
-
+    if (Bitlocker_status){
+        write-host "Bitlocker reactivated"
+    }else{
+        write-host "bitlocker reactivation failed"
+    }
 }else{
     #If no bitlocker run Dell Command Update with out care
     invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /log C:\"
