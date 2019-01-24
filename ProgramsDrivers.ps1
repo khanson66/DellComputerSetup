@@ -89,13 +89,26 @@ download button and copying url. writes it to ninite.exe #>
 
 #name of downloaded program
 $ProgInstaller = "ninite.exe"
-write-host "Ninite downloading"
+write-host "Ninite downloading starting"
+
+# removes the progress bar for download
+$ProgressPreference = 'silently'    
+
 #downloads ninite installer (TODO: figure out a selector of sorts order for part below does not matter)
-Invoke-WebRequest -outf $ProgInstaller https://ninite.com/.net4.7.2-7zip-air-chrome-firefox-java8-shockwave-silverlight-vlc/ninite.exe
-Start-Process .\$ProgInstaller
-#runs the ninite installer and closes it when done. run autoit script in exe form
-write-host "Ninite installing"
+Invoke-WebRequest -outf $ProgInstaller https://ninite.com/.net4.7.2-7zip-air-chrome-firefox-java8-shockwave-silverlight-vlc/ninite.exe 
+
+# readds the progress bar for download
+$ProgressPreference = 'continue'    
+write-host "Download finished"
+
+write-host "Ninite started installing"
+
+#runs the run autoit script in exe form
 Start-Process ".\niniteauto.exe" -WarningAction SilentlyContinue -Wait
+
+#runs ninite to start the download of programs
+Start-Process .\$ProgInstaller
+
 write-host "Ninite successfully installed"
 #--------------------------------------------------------------------------------------------------------------------------- 
 
@@ -105,20 +118,28 @@ Write-Host "Checking if Dell Command is installed"
 
 #checks to see if Dell Command | Update is installed, if not it is installed
 #set the the name for the setup file
-$DellC = "dellcommand.exe"
+
 if(Check_Program_Installed('Dell Command | Update')){
+    $DellC = "dellcommand.exe"
     write-host "Downloading Dell Command Update"
     
-    #downloads dellcommand and names it
-    Invoke-WebRequest -outf $DellC https://downloads.dell.com/FOLDER05055451M/1/Dell-Command-Update_DDVDP_WIN_2.4.0_A00.EXE
+    # removes the progress bar for download
+    $ProgressPreference = 'silently'   
     
-    Write-host " installing Dell Command Update"
+    #downloads dellcommand and names it
+    Invoke-WebRequest -outf $DellC https://downloads.dell.com/FOLDER05055451M/1/Dell-Command-Update_DDVDP_WIN_2.4.0_A00.EXE 
+    
+    # readds the progress bar for download
+    $ProgressPreference = 'continue'    
+    write-host "successfully finished downloading Dell Command Update"
+    Write-host "Installing Dell Command Update"
 
     #runs dell setup for dell command silently
     Start-Process $DellC -WarningAction SilentlyContinue -Wait -ArgumentList "/s"
     
     #alls windows to update that it exists
     Write-host "setting up install"
+    #gives windows time update that dell command exists
     Start-Sleep 10
      
 }
@@ -131,8 +152,6 @@ if(Bitlocker_status){
     Suspend-BitLocker -MountPoint "C:" -RebootCount 0
     write-host "bitlocker suspended"
 
-    
-    
     invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /reboot /log C:\"
     
     
