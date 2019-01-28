@@ -102,12 +102,12 @@ $ProgressPreference = 'continue'
 write-host "Download finished"
 
 #runs the run autoit script in exe form
-Start-Process ".\niniteauto.exe" -WarningAction SilentlyContinue
+Start-Process ".\niniteauto.exe" -WarningAction SilentlyContinue 
 
 write-host "Ninite started installing"
 
 #runs ninite to start the download of programs
-Start-Process .\$ProgInstaller -wait
+Start-Process .\$ProgInstaller -wait -WarningAction SilentlyContinue
 
 write-host "Ninite successfully installed"
 #--------------------------------------------------------------------------------------------------------------------------- 
