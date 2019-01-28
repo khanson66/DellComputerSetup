@@ -92,7 +92,7 @@ $ProgInstaller = "ninite.exe"
 write-host "Ninite downloading starting"
 
 # removes the progress bar for download
-$ProgressPreference = 'silently'    
+$ProgressPreference = 'silentlyContinue'    
 
 #downloads ninite installer (TODO: figure out a selector of sorts order for part below does not matter)
 Invoke-WebRequest -outf $ProgInstaller https://ninite.com/.net4.7.2-7zip-air-chrome-firefox-java8-shockwave-silverlight-vlc/ninite.exe 
@@ -124,7 +124,7 @@ if(Check_Program_Installed('Dell Command | Update')){
     write-host "Downloading Dell Command Update"
     
     # removes the progress bar for download
-    $ProgressPreference = 'silently'   
+    $ProgressPreference = 'silentlyContinue'   
     
     #downloads dellcommand and names it
     Invoke-WebRequest -outf $DellC https://downloads.dell.com/FOLDER05055451M/1/Dell-Command-Update_DDVDP_WIN_2.4.0_A00.EXE 
