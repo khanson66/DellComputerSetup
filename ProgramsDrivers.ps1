@@ -75,7 +75,9 @@ if ($AddAD){
     if (!$taskexist){
         $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-noexit -ExecutionPolicy Bypass -Command $PSScriptRoot\SetupAD.ps1 -taskname $taskname  -CompName $compName -uname $uname -pass $pass"
         $trigger = New-ScheduledTaskTrigger -AtLogOn
-        Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Description "runs to install programs and drivers" -RunLevel Highest
+        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DeleteExpiredTaskAfter 0
+        
+        Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Settings $settings -Description "runs to install programs and drivers" -RunLevel Highest
         Write-Host "task created"
     }
    
