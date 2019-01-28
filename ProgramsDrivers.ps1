@@ -101,13 +101,13 @@ Invoke-WebRequest -outf $ProgInstaller https://ninite.com/.net4.7.2-7zip-air-chr
 $ProgressPreference = 'continue'    
 write-host "Download finished"
 
+#runs the run autoit script in exe form
+Start-Process ".\niniteauto.exe" -WarningAction SilentlyContinue
+
 write-host "Ninite started installing"
 
-#runs the run autoit script in exe form
-Start-Process ".\niniteauto.exe" -WarningAction SilentlyContinue -Wait
-
 #runs ninite to start the download of programs
-Start-Process .\$ProgInstaller
+Start-Process .\$ProgInstaller -wait
 
 write-host "Ninite successfully installed"
 #--------------------------------------------------------------------------------------------------------------------------- 
