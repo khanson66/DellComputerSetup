@@ -64,6 +64,8 @@ Set-Location $PSScriptRoot
 
 
 #-----------------------------------------Runs if AddAD Switch is called----------------------------------------------------
+
+
 if ($AddAD){
     $userCred = Get-Credential
     $uname = $userCred.UserName
@@ -75,8 +77,9 @@ if ($AddAD){
     if (!$taskexist){
         $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-noexit -ExecutionPolicy Bypass -Command $PSScriptRoot\SetupAD.ps1 -taskname $taskname  -CompName $compName -uname $uname -pass $pass"
         $trigger = New-ScheduledTaskTrigger -AtLogOn
-        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DeleteExpiredTaskAfter 0
-        
+        # TODO get auto deleteing working after one run
+        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+         
         Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Settings $settings -Description "runs to install programs and drivers" -RunLevel Highest
         Write-Host "task created"
     }
