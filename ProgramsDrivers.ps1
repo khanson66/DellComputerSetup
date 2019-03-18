@@ -1,70 +1,48 @@
 ﻿
-#-----------------------------------------this obtains admin privialages----------------------------------------------------
-#Must be the first part of program
-param([switch]$Elevated,                #used with checkadmin to denote if the program failed to elevate
-[string]$taskname = "programsdrivers",  #control the taskname used in the windows schedule and allows name to pass through restart
-[switch]$AddAD                          #if called the program names and add computer to Active Directory after restart 
+param([switch]$Elevated,               
+[string]$taskname = "programsdrivers",  
+[switch]$AddAD                         
 )
-
-
-function CheckAdmin {
+function Check-Admin {
     #checks to see if user is admin
     $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
     $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
-#runs if the current session is not running as admin
-if ((CheckAdmin) -eq $false)  {
-    #if when the program is rerun it is not as admin it fails
-    if ($elevated){
-        write-host "could not elevate, please quit"
-    }else {
-    #reruns as admin
-        Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -noexit -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
-    }
-    
-    exit
+
+
+function Check-Installed( $programName ) {
+    Get-CMIObject -Query "SELECT * FROM Win32_Product Where Name Like '$programName'" | 
+    measure-object -Sum
 }
-#---------------------------------------------------------------------------------------------------------------------------
 
-#-----------------------------------------checks to see is called program is installed--------------------------------------
-function Check_Program_Installed( $programName ) {
-    
-    #runs query to get all the objects with the name inputed the number of objects which is measured and counted 
-    $wmi_check = (Get-WMIObject -Query "SELECT * FROM Win32_Product Where Name Like '$programName'" | measure-object).count 
-
-    # if there are no object 0 is the returned by the above statment and the function returns true else false
-    if($wmi_check -like "0"){
-        return $true
-    }else{
-        return $false
-    }
-
-}
-#---------------------------------------------------------------------------------------------------------------------------
-
-#-----------------------------------------checks to see is bitlocker is active and at 100%----------------------------------
 function Bitlocker_status{
-
-    # loads bitlocker volume on the C drive to the varible
     $BLactive = Get-Bitlockervolume -MountPoint "C:"
-
-    #checks to see if it is active and if it is at 100%
     if($BLactive.ProtectionStatus -eq 'On' -and $BLactive.EncryptionPercentage -eq '100'){
        return $true
     }else{
         return $false
     }
 }
-#---------------------------------------------------------------------------------------------------------------------------
 
-#assures that the current directory pointer is in the CSOSetup folder
-Write-host "Beginnging installation" -ForegroundColor Red
-write-host $PSScriptRoot
+if ((Check-Admin) -eq $false)  {
+    if ($elevated){
+        Write-Error "Failed to elevate session" 
+    }else {
+        $arguments = @{
+            noprofile = $true
+            noexit = $true
+            file = "{0}"
+            elevated = $true
+            f = $myinvocation.MyCommand.Definition
+        }
+        Start-Process powershell.exe -Verb RunAs -ArgumentList @arguments
+    }
+    exit
+}
+
+
+Write-Debug $PSScriptRoot
 Set-Location $PSScriptRoot
-
-
-#-----------------------------------------Runs if AddAD Switch is called----------------------------------------------------
-
 
 if ($AddAD){
     $userCred = Get-Credential
@@ -73,8 +51,13 @@ if ($AddAD){
     $compName = read-host -prompt "Please get the computername for the new computer. CHECK AD!"
     $taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
     
-    Write-Host $taskexist
+    
+    
     if (!$taskexist){
+        Write-Verbose "Creating New Task"
+        $arguments = @
+        
+        
         $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-noexit -ExecutionPolicy Bypass -Command $PSScriptRoot\SetupAD.ps1 -taskname $taskname  -CompName $compName -uname $uname -pass $pass"
         $trigger = New-ScheduledTaskTrigger -AtLogOn
         # TODO get auto deleteing working after one run
@@ -85,91 +68,79 @@ if ($AddAD){
     }
    
 }
-#---------------------------------------------------------------------------------------------------------------------------
-
-#-----------------------------------------Downloads and runs Ninite---------------------------------------------------------
-
-<# gets the ninite installer for the standard CSO programs. Url can be gotten by going and selecting programs clicking on 
-download button and copying url. writes it to ninite.exe #>
 
 #name of downloaded program
 $ProgInstaller = "ninite.exe"
 write-host "Ninite downloading starting"
 
-# removes the progress bar for download
-$ProgressPreference = 'silentlyContinue'    
+
+$ProgressPreference = 'silentlyContinue'    # removes the progress bar for download because slows downlaod
 
 #downloads ninite installer (TODO: figure out a selector of sorts order for part below does not matter)
-Invoke-WebRequest -outf $ProgInstaller https://ninite.com/.net4.7.2-7zip-air-chrome-firefox-java8-shockwave-silverlight-vlc/ninite.exe 
+$uri = 'https://ninite.com/.net4.7.2-7zip-air-chrome-firefox-java8-shockwave-silverlight-vlc/ninite.exe'
+Invoke-WebRequest -outf $ProgInstaller -Uri $uri
 
-# readds the progress bar for download
-$ProgressPreference = 'continue'    
+
+$ProgressPreference = 'continue'    #returns to normal operation
 write-host "Download finished"
 
-#runs the run autoit script in exe form
+
 Start-Process ".\niniteauto.exe" -WarningAction SilentlyContinue 
 
-write-host "Ninite started installing"
+Write-Verbose "Ninite started installing"
 
-#runs ninite to start the download of programs
+
 Start-Process .\$ProgInstaller -wait -WarningAction SilentlyContinue
 
-write-host "Ninite successfully installed"
-#--------------------------------------------------------------------------------------------------------------------------- 
+Write-Verbose "Ninite successfully installed"
 
-#-----------------------------------------Installs Dell Command Update------------------------------------------------------
+Write-Verbose "Checking if Dell Command is installed"
 
-Write-Host "Checking if Dell Command is installed"
-
-#checks to see if Dell Command | Update is installed, if not it is installed
-#set the the name for the setup file
-
-if(Check_Program_Installed('Dell Command | Update')){
+if(Check-Installed('Dell Command | Update') -eq 0){
     $DellC = "dellcommand.exe"
-    write-host "Downloading Dell Command Update"
+    Write-Verbose "Downloading Dell Command Update"
     
-    # removes the progress bar for download
     $ProgressPreference = 'silentlyContinue'   
     
     #downloads dellcommand and names it
     Invoke-WebRequest -outf $DellC https://downloads.dell.com/FOLDER05055451M/1/Dell-Command-Update_DDVDP_WIN_2.4.0_A00.EXE 
     
-    # readds the progress bar for download
+    
     $ProgressPreference = 'continue'    
-    write-host "successfully finished downloading Dell Command Update"
-    Write-host "Installing Dell Command Update"
+    Write-Verbose "successfully finished downloading Dell Command Update"
+    Write-Verbose "Installing Dell Command Update"
 
-    #runs dell setup for dell command silently
+    
     Start-Process $DellC -WarningAction SilentlyContinue -Wait -ArgumentList "/s"
     
     #alls windows to update that it exists
-    Write-host "setting up install"
-    #gives windows time update that dell command exists
-    Start-Sleep 10
-     
+    Write-Verbose "setting up install"
+    
+    Start-Sleep 10 #gives windows time update that dell command exists
+    
 }
-#---------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------Runs Dell Command Update----------------------------------------------------------
-# checks if bitlocker is active
+
 if(Bitlocker_status){
-    <#if active suspends bitlocker and runs Dell Command Update. This is done incase of a bios update. If no restart happens
-    then bitlocker is resumed as normal#>
+    
     Suspend-BitLocker -MountPoint "C:" -RebootCount 0
-    write-host "bitlocker suspended"
+    Write-Verbose "bitlocker suspended"
 
     invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /reboot /log C:\"
     
-    
     Resume-BitLocker -MountPoint "C:"
+    
+    
     if (Bitlocker_status){
-        write-host "Bitlocker reactivated"
+        Write-Verbose "Bitlocker reactivated"
     }else{
-        write-host "bitlocker reactivation failed"
+        Write-Verbose "bitlocker reactivation failed"
     }
+    Write-Host 'Install Finished' -ForegroundColor Green
 }else{
-    #If no bitlocker run Dell Command Update with out care
+
+    
     invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /log C:\"
+    
     Restart-Computer
 }
 
-#---------------------------------------------------------------------------------------------------------------------------s
