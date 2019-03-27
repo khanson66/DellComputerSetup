@@ -3,14 +3,14 @@ param([switch]$Elevated,
 [string]$taskname = "programsdrivers",  
 [switch]$AddAD                         
 )
-function Check-Admin {
+function Confirm-Admin{
     #checks to see if user is admin
     $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
     $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 
 
-function Check-Installed( $programName ) {
+function Confirm-Installed( $programName ) {
     Get-CMIObject -Query "SELECT * FROM Win32_Product Where Name Like '$programName'" | 
     measure-object -Sum
 }
@@ -24,7 +24,7 @@ function Bitlocker_status{
     }
 }
 
-if ((Check-Admin) -eq $false)  {
+if ((Confirm-Admin) -eq $false)  {
     if ($elevated){
         Write-Error "Failed to elevate session" 
     }else {
@@ -55,10 +55,19 @@ if ($AddAD){
     
     if (!$taskexist){
         Write-Verbose "Creating New Task"
-        $arguments = @
+        $arguments = @{
+            noexit = $true
+            ExecutionPolicy = Bypass
+            Command = "$PSScriptRoot\SetupAD.ps1"
+            taskname = $taskname
+            CompName = $compName 
+            uname =  $uname 
+            pass =  $pass
+        }
         
         
-        $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-noexit -ExecutionPolicy Bypass -Command $PSScriptRoot\SetupAD.ps1 -taskname $taskname  -CompName $compName -uname $uname -pass $pass"
+        
+        $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument @arguments
         $trigger = New-ScheduledTaskTrigger -AtLogOn
         # TODO get auto deleteing working after one run
         $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
@@ -96,7 +105,7 @@ Write-Verbose "Ninite successfully installed"
 
 Write-Verbose "Checking if Dell Command is installed"
 
-if(Check-Installed('Dell Command | Update') -eq 0){
+if(Confirm-Installed('Dell Command | Update') -eq 0){
     $DellC = "dellcommand.exe"
     Write-Verbose "Downloading Dell Command Update"
     

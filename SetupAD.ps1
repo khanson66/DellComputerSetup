@@ -1,10 +1,19 @@
 ﻿#-----------------------------------------this obtains admin privialages----------------------------------------------------
 #Must be the first part of program
-param([switch]$Elevated,
-[string]$taskname = "programsdrivers",
-[string] $compName,
-[string] $pass,
-[string] $uname
+param(
+    [switch]
+    $Elevated,
+    [Parameter]
+    [string]
+    $taskname = "programsdrivers",
+    [string] 
+    $compName,
+
+    [string] 
+    $pass,
+
+    [string] 
+    $uname
 )
 #checks to see if user is admin
 function CheckAdmin {
