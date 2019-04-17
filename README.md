@@ -5,7 +5,8 @@
 supporting files
 
 -niniteauto.exe
-	built with autoit. it run ninte automaticatly and removes the gui. it works by waiting to see the word finished appear on screen
+	built with AutoIT. it run ninte automaticatly and removes the gui. 
+	it works by waiting to see the word finished appear on screen closing the progam.
 	
-	- program is from https://www.autoitscript.com/site/autoit/downloads/
-	-used http://cramaboule.com/index.php/silent-ninite
+	Not using the PSModule version to retain system compatibilty and reduce download
+	and conflicts

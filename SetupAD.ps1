@@ -1,39 +1,35 @@
-﻿#-----------------------------------------this obtains admin privialages----------------------------------------------------
+﻿
+#-----------------------------------------this obtains admin privialages----------------------------------------------------
 #Must be the first part of program
 param(
     [switch]
     $Elevated,
-    [Parameter]
     [string]
     $taskname = "programsdrivers",
     [string] 
     $compName,
-
     [string] 
     $pass,
-
     [string] 
     $uname
 )
-#checks to see if user is admin
-function CheckAdmin {
-    $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
-    $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
-}
+Import-Module .\Configuration.psm1
 #runs if the current session is not running as admin
-if ((CheckAdmin) -eq $false)  {
-    #if when the program is rerun it is not as admin it fails
+if ((Confirm-Admin) -eq $false)  {
     if ($elevated){
-        write-host "could not elevate, please quit"
+        Write-Error "Failed to elevate session" 
     }else {
-    #reruns as admin
-        Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -noexit -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
+        $arguments = @{
+            noprofile = $true
+            noexit = $true
+            file = "{0}"
+            elevated = $true
+            f = $myinvocation.MyCommand.Definition
+        }
+        Start-Process powershell.exe -Verb RunAs -ArgumentList @arguments
     }
-    
     exit
 }
-#---------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------removes previously created task---------------------------------------------------
 
 #using taskname
 $taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
@@ -42,23 +38,37 @@ if($taskexist){
   Unregister-ScheduledTask -TaskName $taskname -Confirm:$false
 }
 
-#---------------------------------------------------------------------------------------------------------------------------
 
+$credential = $null
 
-    $credential = $null
-    if ($uname -notlike $null -and $pass -notlike $null){
-        $upass = ConvertTo-SecureString $pass
-        $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $uname,$upass 
-    }else{
-        $credential = Get-Credential
+if ($uname -notlike $null -and $pass -notlike $null){
+    $upass = ConvertTo-SecureString $pass
+    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $uname,$upass 
+}else{
+    $credential = Get-Credential
+}
+do{
+    $attempt = $true
+    try{
+        $addCompItems = @{
+            DomainName = "pace.edu"
+            NewName = $compName
+            Credential = $credential
+            restart = $true
+            ErrorAction = stop            
+        }
+        Add-Computer @addCompItems
     }
-    Add-Computer -DomainName "pace.edu" -NewName $compName -Credential $credential -restart 
+    catch{
+        write-error -Message $_
+        $attempt = $false
+        Write-host "Please insert Credentials again or end the program"
+        $credential = Get-Credential -UserName $uname
+    }
+     
+}while ($attempt)
 
-    #this might contain errors.
-    #TODO:find a error correction portion
-    Write-host "An error has occured" -ForegroundColor Red
-    $compName = read-host -prompt "Please get the computername for the new computer. CHECK AD!" 
-    add-Computer -DomainName "pace.edu" -NewName $compname -restart
+Write-host "CONGRATULATIONS YOU HAVE COMPLETED THE SET UP!!!!!!!!" -ForegroundColor Green
 
 
 
