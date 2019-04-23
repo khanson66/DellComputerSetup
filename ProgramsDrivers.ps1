@@ -23,12 +23,12 @@ Write-Debug $PSScriptRoot
 #intial load in of data
 $computerName = Read-Host -Prompt "Please enter the name of the computer"
 
-$addAD = $null
-$yesList = @("Yes","y")
-$noList = @("No","n")
+
+$yesList = @("yes","y")
+$noList = @("no","n")
 do{
     $addADresponse = Read-Host -Prompt "Do you want to add the computer to Active Directory (Yes/No)"
-}while($addADresponse -match $yesList -or $addAD -match $noList )
+}while(($addADresponse -notin $yesList) -and ($addADresponse -notin $noList))
 
 if($addADresponse -match $yesList){
     
