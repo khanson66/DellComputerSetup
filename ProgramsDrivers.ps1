@@ -1,4 +1,5 @@
 ﻿param([switch]$Elevated, [switch]$addAD)
+
 Import-Module .\Configuration.psm1
 . .\ConfigVar.ps1
 if ((Confirm-Admin) -eq $false)  {
@@ -49,9 +50,9 @@ Write-Verbose "Ninite successfully installed"
 Write-Verbose "Checking if Dell Command is installed"
 
 #Installs Dell Command if Not Installed
-if(Confirm-Installed('Dell Command | Update') -eq 0){
+if(!(Confirm-Installed -programName 'Dell Command | Update')){
     Write-Verbose "Dell Command not installed, Installing now"
-    
+
     Write-Verbose "Downloading Dell Command Update"
     $program = Invoke-Download -url $dellCommandURL -name "DellCommand.exe" 
     Write-Verbose "successfully finished downloading Dell Command Update"
@@ -66,7 +67,7 @@ if(Confirm-Installed('Dell Command | Update') -eq 0){
     
 }
 
-if(Bitlocker_status){
+if(Get-BitLockerStatus){
     Suspend-BitLocker -MountPoint "C:" -RebootCount 0
     Write-Verbose "bitlocker suspended"
 
@@ -74,7 +75,7 @@ if(Bitlocker_status){
     
     Resume-BitLocker -MountPoint "C:"
         
-    if (Bitlocker_status){
+    if (Get-BitLockerStatus){
         Write-Verbose "Bitlocker reactivated"
     }else{
         Write-Verbose "bitlocker reactivation failed"

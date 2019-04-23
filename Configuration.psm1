@@ -9,12 +9,12 @@ function Confirm-Installed {
         $programName
     )
     process {
-        $installCount =(Get-ChildItem -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+        $installed =(Get-ChildItem -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" |
                         Get-ItemProperty -Name DisplayName -ErrorAction SilentlyContinue).DisplayName| 
-                        Select-string $programName |
-                        Measure-Object -Sum
+                        Select-string -SimpleMatch $programName
+        
 
-        if($installCount -gt 0){
+        if($installed){
             $true
         }else{
             $false
