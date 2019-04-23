@@ -1,6 +1,7 @@
 ﻿
 #-----------------------------------------this obtains admin privialages----------------------------------------------------
 #Must be the first part of program
+[CmdletBinding()]
 param(
     [switch]
     $Elevated,

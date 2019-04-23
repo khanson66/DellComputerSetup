@@ -1,4 +1,5 @@
-﻿param([switch]$Elevated, [switch]$addAD)
+﻿[CmdletBinding()]
+param([switch]$Elevated, [switch]$addAD)
 
 Import-Module .\Configuration.psm1
 . .\ConfigVar.ps1
@@ -18,7 +19,7 @@ if ((Confirm-Admin) -eq $false)  {
     exit
 }
 
-Write-Debug $PSScriptRoot
+Write-Verbose $PSScriptRoot
 
 #intial load in of data
 $computerName = Read-Host -Prompt "Please enter the name of the computer"
