@@ -1,7 +1,6 @@
-﻿Import-Module .\Configuration.psm1
+﻿param([switch]$Elevated, [switch]$addAD)
+Import-Module .\Configuration.psm1
 . .\ConfigVar.ps1
-param([switch]$Elevated)
-
 if ((Confirm-Admin) -eq $false)  {
     if ($elevated){
         Write-Error "Failed to elevate session" 
@@ -28,7 +27,7 @@ $yesList = @("Yes","y")
 $noList = @("No","n")
 do{
     $addADresponse = Read-Host -Prompt "Do you want to add the computer to Active Directory (Yes/No)"
-}while($addADresponse -notmatch $yesList -or $addAD -notmatch $noList )
+}while($addADresponse -match $yesList -or $addAD -match $noList )
 
 if($addADresponse -match $yesList){
     
@@ -37,7 +36,7 @@ if($addADresponse -match $yesList){
 }
 #end load in
 
-$program = Install-Program -url $NiniteURL -name "Ninite.exe"
+$program = Invoke-Download -url $NiniteURL -name "Ninite.exe"
 
 Start-Process ".\niniteauto.exe" -WarningAction SilentlyContinue
 

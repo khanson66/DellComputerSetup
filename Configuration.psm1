@@ -52,6 +52,8 @@ function Add-LogonTask {
                    ValueFromPipelineByPropertyName = $true)]
         [string]
         $ComputerName,
+        [string]
+        $taskname = "TaskOnLogon",
 
         [parameter(Mandatory = $true)]
         [string]
@@ -62,17 +64,17 @@ function Add-LogonTask {
         #"final" Varibles TODO: find a better way to handle
         $taskname = "RunOnLogOn"
 
-        if($Credential){
-            if($null -eq $Credential ){
+        
+        if($null -eq $Credential ){
 
-                Write-Error "No credentials given please add domain credentials"
+            Write-Error "No credentials given please add domain credentials"
 
-                $Credential = Get-Credential -Message "Please insert your domain credentials"
-            }
-            
-            $uname = $Credential.UserName
-            $pass = Convertfrom-securestring $userCred.Password 
+            $Credential = Get-Credential -Message "Please insert your domain credentials"
         }
+        
+        $uname = $Credential.UserName
+        $pass = Convertfrom-securestring $Credential.Password 
+
         if($ComputerName -eq ""){
             $ComputerName = read-host -prompt "Please get the computername for the new computer. CHECK AD!"
         }
@@ -89,17 +91,9 @@ function Add-LogonTask {
         }else{
             Write-Verbose "Creating New Task"
 
-            $taskArguments = @{
-                noexit = $true
-                ExecutionPolicy = Bypass
-                Command = $FilePath
-                taskname = $taskname
-                CompName = $compName 
-                uname =  $uname 
-                pass =  $pass
-            }
+            $taskArguments = "-noexit -ExecutionPolicy Bypass -Command $FilePath -taskname $taskname -CompName $compName -uname $uname -pass $pass"
             
-            $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument @taskArguments
+            $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument $taskArguments
 
             $trigger = New-ScheduledTaskTrigger -AtLogOn
 
@@ -112,12 +106,11 @@ function Add-LogonTask {
                 trigger = $trigger
                 taskname = $taskname
                 settings = $settings
-                description = "runs to install programs and drivers"
-                runlevel = Highest
+                description = "runs on script on reboot"
+                runlevel = "Highest"
             }
 
-            Register-ScheduledTask @registerArguments
-            
+            Register-ScheduledTask @registerArguments           
             Write-Verbose "task created"
         }
        
@@ -164,15 +157,15 @@ function Invoke-Download {
             }
         }
         
-        write-verbose("downloaded files name is " + $name)
-        Invoke-WebRequest -outf $ProgInstaller -Uri $url
+        write-verbose "downloaded files name is $name"
+        Invoke-WebRequest -outf $name -Uri $url
 
 
     }
     
     end {
         $ProgressPreference = 'continue'    #returns to normal operation
-        write-verbose "Download finished for " + $name
+        write-verbose "Download finished for $name"
 
         #returns name as allow flexablility
         $name
