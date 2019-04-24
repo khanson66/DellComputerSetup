@@ -60,11 +60,8 @@ function Add-LogonTask {
         $FilePath
 
     )
-    begin {
-        #"final" Varibles TODO: find a better way to handle
-        $taskname = "RunOnLogOn"
-
-        
+    begin { 
+       
         if($null -eq $Credential ){
 
             Write-Error "No credentials given please add domain credentials"

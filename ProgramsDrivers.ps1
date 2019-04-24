@@ -31,10 +31,11 @@ do{
     $addADresponse = Read-Host -Prompt "Do you want to add the computer to Active Directory (Yes/No)"
 }while(($addADresponse -notin $yesList) -and ($addADresponse -notin $noList))
 
-if($addADresponse -match $yesList){
+if($addADresponse -in $yesList){
     
     $credentials = Get-Credential
-    Add-LogonTask -Credential $credentials -ComputerName $computerName
+    $filename = "SetupAD.ps1"
+    Add-LogonTask -Credential $credentials -ComputerName $computerName -FilePath "$PSScriptRoot\$filename"
 }
 #end load in
 
