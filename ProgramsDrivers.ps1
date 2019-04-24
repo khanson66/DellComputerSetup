@@ -1,5 +1,5 @@
 ﻿[CmdletBinding()]
-param([switch]$Elevated, [switch]$addAD)
+param([switch]$Elevated)
 
 Import-Module .\Configuration.psm1
 . .\ConfigVar.ps1
@@ -22,7 +22,7 @@ if ((Confirm-Admin) -eq $false)  {
 Write-Verbose $PSScriptRoot
 
 #intial load in of data
-$computerName = Read-Host -Prompt "Please enter the name of the computer"
+
 
 
 $yesList = @("yes","y")
@@ -32,7 +32,7 @@ do{
 }while(($addADresponse -notin $yesList) -and ($addADresponse -notin $noList))
 
 if($addADresponse -in $yesList){
-    
+    $computerName = Read-Host -Prompt "Please enter the name of the computer"
     $credentials = Get-Credential
     $filename = "SetupAD.ps1"
     Add-LogonTask -Credential $credentials -ComputerName $computerName -FilePath "$PSScriptRoot\$filename"
