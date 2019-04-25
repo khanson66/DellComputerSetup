@@ -45,7 +45,7 @@ if($addADresponse -in $yesList){
     $taskArguments  = "$FilePath -taskname $taskname -ComputerName $ComputerName -uname $uname -pass $pass"
     $programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
     
-    Add-LogonTask -Programs $program -Argument $taskArguments
+    Add-LogonTask -Program $program -Argument $programArguments
 }
 #end load in
 

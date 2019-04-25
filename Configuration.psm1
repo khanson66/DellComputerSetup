@@ -47,7 +47,7 @@ function Add-LogonTask {
                    ValueFromPipeline =$true,
                    ValueFromPipelineByPropertyName = $true)]
         [string]
-        $Programs,
+        $Program,
 
         [parameter(Mandatory = $true)]
         [string]
