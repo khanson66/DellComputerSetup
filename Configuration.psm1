@@ -43,42 +43,17 @@ function Add-LogonTask {
     #creates task that runs script after reboot and login
     [CmdletBinding()]
     param ( 
-        [parameter(Mandatory = $true)]
-        [pscredential]
-        $Credential,
-
         [Parameter(Mandatory = $true,
                    ValueFromPipeline =$true,
                    ValueFromPipelineByPropertyName = $true)]
         [string]
-        $ComputerName,
-        [string]
-        $taskname = "TaskOnLogon",
-
+        $program,
         [parameter(Mandatory = $true)]
         [string]
-        $FilePath
+        $arguments
 
     )
-    begin { 
-       
-        if($null -eq $Credential ){
-
-            Write-Error "No credentials given please add domain credentials"
-
-            $Credential = Get-Credential -Message "Please insert your domain credentials"
-        }
-        
-        $uname = $Credential.UserName
-        $pass = Convertfrom-securestring $Credential.Password 
-
-        if($ComputerName -eq ""){
-            $ComputerName = read-host -prompt "Please get the computername for the new computer. CHECK AD!"
-        }
-        
-        
-    }
-    
+   
     process {
         $taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
 
@@ -88,9 +63,7 @@ function Add-LogonTask {
         }else{
             Write-Verbose "Creating New Task"
 
-            $taskArguments = "-noexit -ExecutionPolicy Bypass -Command $FilePath -taskname $taskname -CompName $compName -uname $uname -pass $pass"
-            
-            $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument $taskArguments
+            $task = New-ScheduledTaskAction -Execute $program -Argument $Arguments
 
             $trigger = New-ScheduledTaskTrigger -AtLogOn
 
@@ -113,8 +86,6 @@ function Add-LogonTask {
        
     }
     
-    end {
-    }
 }
 function Confirm-Admin{
     #checks to see if user is admin

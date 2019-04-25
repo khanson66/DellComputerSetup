@@ -34,8 +34,16 @@ do{
 if($addADresponse -in $yesList){
     $computerName = Read-Host -Prompt "Please enter the name of the computer"
     $credentials = Get-Credential
-    $filename = "SetupAD.ps1"
-    Add-LogonTask -Credential $credentials -ComputerName $computerName -FilePath "$PSScriptRoot\$filename"
+    
+    $filePath = "$PSScriptRoot\SetupAD.ps1"
+    $program = "powershell.exe"
+
+    $uname = $credentials.UserName
+    $pass = ConvertTo-SecureString $credentials.Password
+    $taskname = "RunOnLogin"
+    $taskArguments = "-noexit -ExecutionPolicy Bypass -Command $FilePath -taskname $taskname -ComputerName $ComputerName -uname $uname -pass $pass"
+    
+    Add-LogonTask -Programs $program -Argument $taskArguments
 }
 #end load in
 
