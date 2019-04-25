@@ -47,10 +47,12 @@ function Add-LogonTask {
                    ValueFromPipeline =$true,
                    ValueFromPipelineByPropertyName = $true)]
         [string]
-        $program,
+        $Programs,
+
         [parameter(Mandatory = $true)]
         [string]
         $arguments,
+
         [string]
         $taskname = "RunOnLogin"
 

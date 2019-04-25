@@ -39,7 +39,7 @@ if($addADresponse -in $yesList){
     $program = "powershell.exe"
 
     $uname = $credentials.UserName
-    $pass = ConvertTo-SecureString $credentials.Password
+    $pass = ConvertFrom-SecureString $credentials.Password
     $taskname = "RunOnLogin"
     $taskArguments = "-noexit -ExecutionPolicy Bypass -Command $FilePath -taskname $taskname -ComputerName $ComputerName -uname $uname -pass $pass"
     
