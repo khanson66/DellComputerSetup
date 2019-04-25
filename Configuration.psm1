@@ -50,7 +50,9 @@ function Add-LogonTask {
         $program,
         [parameter(Mandatory = $true)]
         [string]
-        $arguments
+        $arguments,
+        [string]
+        $taskname = "RunOnLogin"
 
     )
    
