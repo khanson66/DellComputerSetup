@@ -53,7 +53,7 @@ do{
     try{
         $addCompItems = @{
             DomainName = "pace.edu"
-            NewName = $compName
+            NewName = $computerName
             Credential = $credential
             restart = $true
             ErrorAction = stop            

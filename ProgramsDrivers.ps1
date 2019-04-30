@@ -42,7 +42,7 @@ if($addADresponse -in $yesList){
     $pass = ConvertFrom-SecureString $credentials.Password
     $taskname = "RunOnLogin"
     
-    $taskArguments  = "$FilePath -taskname $taskname -ComputerName $ComputerName -uname $uname -pass $pass -verbose $VerbosePreference"
+    $taskArguments  = "$FilePath -taskname $taskname -ComputerName $ComputerName -uname $uname -pass $pass"
     $programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
     
     Add-LogonTask -Program $program -Argument $programArguments
