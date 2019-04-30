@@ -1,4 +1,3 @@
-
 function Confirm-Installed {
     [CmdletBinding()]
     param (
@@ -25,10 +24,7 @@ function Confirm-Installed {
 
 function Get-BitLockerStatus{
     [CmdletBinding()]
-    param(
-
-    )
-
+    param()
     process{
         $BLactive = Get-Bitlockervolume -MountPoint "C:"
         if($BLactive.ProtectionStatus -eq 'On' -and $BLactive.EncryptionPercentage -eq '100'){
@@ -62,8 +58,8 @@ function Add-LogonTask {
         $taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
 
         if ($taskexist){
-            #TODO: Add protection like deleting existing. Needs more thought
-            write-Verbose "task already made, skipping step"
+            #only skips because existing task could delete an already existing task
+            write-Verbose "Removing existing step"
         }else{
             Write-Verbose "Creating New Task"
 

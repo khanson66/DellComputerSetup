@@ -1,8 +1,11 @@
 ﻿[CmdletBinding()]
 param([switch]$Elevated)
 
+#adds in functions and the Url varible file
 Import-Module .\Configuration.psm1
 . .\ConfigVar.ps1
+
+# check and elevates if not run as administrator
 if ((Confirm-Admin) -eq $false)  {
     if ($elevated){
         Write-Error "Failed to elevate session" 
@@ -14,19 +17,16 @@ if ((Confirm-Admin) -eq $false)  {
             elevated = $true
             f = $myinvocation.MyCommand.Definition
         }
-        Start-Process powershell.exe -Verb RunAs -ArgumentList @arguments
+        Start-Process powershell.exe -Verb RunAs -ArgumentList $arguments
     }
     exit
 }
 
 Write-Verbose $PSScriptRoot
 
-#intial load in of data
-
-
-
 $yesList = @("yes","y")
 $noList = @("no","n")
+#Check to see if computer is to be add to active directory/renamed
 do{
     $addADresponse = Read-Host -Prompt "Do you want to add the computer to Active Directory (Yes/No)"
 }while(($addADresponse -notin $yesList) -and ($addADresponse -notin $noList))
@@ -42,13 +42,13 @@ if($addADresponse -in $yesList){
     $pass = ConvertFrom-SecureString $credentials.Password
     $taskname = "RunOnLogin"
     
-    $taskArguments  = "$FilePath -taskname $taskname -ComputerName $ComputerName -uname $uname -pass $pass"
+    $taskArguments  = "$FilePath -taskname $taskname -ComputerName $ComputerName -uname $uname -pass $pass -verbose $VerbosePreference"
     $programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
     
     Add-LogonTask -Program $program -Argument $programArguments
 }
-#end load in
 
+#downloads and install ninite
 $program = Invoke-Download -url $NiniteURL -name "Ninite.exe"
 
 Start-Process ".\niniteauto.exe" -WarningAction SilentlyContinue
@@ -59,6 +59,7 @@ Start-Process .\$program -wait -WarningAction SilentlyContinue
 
 Write-Verbose "Ninite successfully installed"
 
+# runs Drive updates with dell command update
 Write-Verbose "Checking if Dell Command is installed"
 
 #Installs Dell Command if Not Installed
@@ -70,16 +71,15 @@ if(!(Confirm-Installed -programName 'Dell Command | Update')){
     Write-Verbose "successfully finished downloading Dell Command Update"
     Write-Verbose "Installing Dell Command Update"
 
-    Start-Process .\$program -WarningAction SilentlyContinue -Wait -ArgumentList "/s"
+    Start-Process .\$program -WarningAction SilentlyContinue -Wait -ArgumentList "/s" #runs dell C|U silently
     
-    #alls windows to update that it exists
     Write-Verbose "setting up install"
 
     Start-Sleep 10  #gives windows time update that dell command exists
     
 }
 
-if(Get-BitLockerStatus){
+if(Get-BitLockerStatus){ # suspends bitlocker incase bios updates are in order to prevent the drive from locking up
     Suspend-BitLocker -MountPoint "C:" -RebootCount 0
     Write-Verbose "bitlocker suspended"
 

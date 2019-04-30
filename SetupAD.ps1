@@ -6,9 +6,9 @@ param(
     [switch]
     $Elevated,
     [string]
-    $taskname = "programsdrivers",
-    [string] 
-    $compName,
+    $taskname = "RunOnLogin",
+    [string]
+    $computerName,
     [string] 
     $pass,
     [string] 
@@ -34,7 +34,7 @@ if ((Confirm-Admin) -eq $false)  {
 
 #using taskname
 $taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
-Write-Host $taskexist
+
 if($taskexist){
   Unregister-ScheduledTask -TaskName $taskname -Confirm:$false
 }
