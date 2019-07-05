@@ -59,15 +59,12 @@ function Add-LogonTask {
 
         if ($taskexist){
             #only skips because existing task could delete an already existing task
-            write-Verbose "Removing existing step"
+            write-Verbose -Message "Removing existing step"
         }else{
-            Write-Verbose "Creating New Task"
+            Write-Verbose -Message "Creating New Task"
 
             $task = New-ScheduledTaskAction -Execute $program -Argument $Arguments
-
             $trigger = New-ScheduledTaskTrigger -AtLogOn
-
-            # TODO get auto deleteing working after one run
 
             $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
             
@@ -81,20 +78,16 @@ function Add-LogonTask {
             }
 
             Register-ScheduledTask @registerArguments           
-            Write-Verbose "task created"
+            
+            Write-Verbose -Message "task created"
         }
        
     }
     
 }
-function Confirm-Admin{
-    #checks to see if user is admin
-    $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
-    $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
-}
+
 function Invoke-Download {
     #installs program from given weblocation to the directory it is in
-    [CmdletBinding()]
     param (
         [parameter(Mandatory = $true,
                    ValueFromPipeline = $true,

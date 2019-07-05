@@ -1,73 +1,59 @@
-﻿
-#-----------------------------------------this obtains admin privialages----------------------------------------------------
-#Must be the first part of program
+﻿#Requires -RunAsAdministrator
 [CmdletBinding()]
 param(
-    [switch]
-    $Elevated,
     [string]
-    $taskname = "RunOnLogin",
-    [string]
-    $computerName,
+    $ComputerName,
+    [string] #All ready coming is as secure string that is in string form
+    $SecuredPass,
     [string] 
-    $pass,
-    [string] 
-    $uname
+    $UserName
 )
+
+
+#import shared functions
 Import-Module .\Configuration.psm1
-#runs if the current session is not running as admin
-if ((Confirm-Admin) -eq $false)  {
-    if ($elevated){
-        Write-Error "Failed to elevate session" 
-    }else {
-        $arguments = @{
-            noprofile = $true
-            noexit = $true
-            file = "{0}"
-            elevated = $true
-            f = $myinvocation.MyCommand.Definition
-        }
-        Start-Process powershell.exe -Verb RunAs -ArgumentList @arguments
-    }
-    exit
-}
+$Config = select-xml -Path "$PSScriptRoot\config.xml" -XPath "//config" | Select-Object -ExpandProperty "node"
 
-#using taskname
-$taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
-
+#checks if task exists
+$taskexist = Get-ScheduledTask -TaskName $Config.general.taskname -ErrorAction Ignore
+#removes task if it exists
 if($taskexist){
-  Unregister-ScheduledTask -TaskName $taskname -Confirm:$false
+  Unregister-ScheduledTask -TaskName $Config.general.taskname -Confirm:$false
 }
 
-
-$credential = $null
-
-if ($uname -notlike $null -and $pass -notlike $null){
-    $upass = ConvertTo-SecureString $pass
-    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $uname,$upass 
+#creates the credentials for the script
+if ($UserName -notlike $null -and $SecuredPass -notlike $null){
+    $ConvertedPassword = ConvertTo-SecureString $SecuredPass
+    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $UserName,$ConvertedPassword 
 }else{
     $credential = Get-Credential
 }
+
+
+#trys to connect to AD. If it fails it repeats asking for credentiasl
+$success = $false
 do{
-    $attempt = $true
+    
     try{
         $addCompItems = @{
-            DomainName = "pace.edu"
-            NewName = $computerName
+            DomainName = $Config.general.domain
+            NewName = $ComputerName
             Credential = $credential
-            restart = $true
-            ErrorAction = stop            
+            Restart = $true
+            ErrorAction = "stop"      
         }
         Add-Computer @addCompItems
-    }
-    catch{
+        $success = $true
+    }catch{
         write-error -Message $_
-        $attempt = $false
         Write-host "Please insert Credentials again or end the program"
-        $credential = Get-Credential -UserName $uname
+
+        $credential = Get-Credential -UserName $UserName
     }
-     
-}while ($attempt)
+       
+} until ($success)
+
+
 
 Write-host "CONGRATULATIONS YOU HAVE COMPLETED THE SET UP!!!!!!!!" -ForegroundColor Green
 
