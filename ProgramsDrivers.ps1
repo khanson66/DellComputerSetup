@@ -1,9 +1,10 @@
 ﻿#Requires -RunAsAdministrator
+
 [CmdletBinding()]
 param()
 
 #functions stored here
-Import-Module .\Configuration.psm1
+Import-Module .\Functions.psm1
 #loads in configuration file
 $Config = select-xml -Path .\config.xml -XPath "//config" | Select-Object -ExpandProperty "node"
 

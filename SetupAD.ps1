@@ -11,7 +11,7 @@ param(
 
 
 #import shared functions
-Import-Module .\Configuration.psm1
+Import-Module .\Functions.psm1
 $Config = select-xml -Path "$PSScriptRoot\config.xml" -XPath "//config" | Select-Object -ExpandProperty "node"
 
 #checks if task exists
@@ -33,7 +33,6 @@ if ($UserName -notlike $null -and $SecuredPass -notlike $null){
 #trys to connect to AD. If it fails it repeats asking for credentiasl
 $success = $false
 do{
-    
     try{
         $addCompItems = @{
             DomainName = $Config.general.domain
