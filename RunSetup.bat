@@ -1,1 +1,1 @@
-powershell -ExecutionPolicy Bypass -Command ".\ProgramsDrivers.ps1 -AddAD"
+powershell -ExecutionPolicy Bypass -Command ".\ProgramsDrivers.ps1"

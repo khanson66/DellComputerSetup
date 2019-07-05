@@ -1,16 +1,21 @@
-
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_icon=AutoItv11.ico
-#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****source from http://cramaboule.com/index.php/silent-ninite
+#AutoIt3Wrapper_Icon=AutoItv11.ico
+#AutoIt3Wrapper_Res_Fileversion=1.0
+#AutoIt3Wrapper_Res_ProductVersion=1.0
+#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
+
 
 
 While 1
 
+   WinSetTrans ( "Preparing", "", 0 )
+	WinSetTrans ( "Ninite", "", 0 )
    $text = WinGetText("Ninite", "")
    If StringInStr($text, "Finished.",1) Then
-	  ExitLoop
+      WinSetTrans("Finished", "",1)
+	   ExitLoop
    EndIf
-   Sleep(500)
+   Sleep(200)
 WEnd
 
 Sleep(1000)

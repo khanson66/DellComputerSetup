@@ -1,64 +1,60 @@
-﻿#-----------------------------------------this obtains admin privialages----------------------------------------------------
-#Must be the first part of program
+﻿#Requires -RunAsAdministrator
+[CmdletBinding()]
 param(
-    [switch]
-    $Elevated,
-    [Parameter]
     [string]
-    $taskname = "programsdrivers",
+    $ComputerName,
+    [string] #All ready coming is as secure string that is in string form
+    $SecuredPass,
     [string] 
-    $compName,
-
-    [string] 
-    $pass,
-
-    [string] 
-    $uname
+    $UserName
 )
-#checks to see if user is admin
-function CheckAdmin {
-    $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
-    $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
-}
-#runs if the current session is not running as admin
-if ((CheckAdmin) -eq $false)  {
-    #if when the program is rerun it is not as admin it fails
-    if ($elevated){
-        write-host "could not elevate, please quit"
-    }else {
-    #reruns as admin
-        Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -noexit -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
-    }
-    
-    exit
-}
-#---------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------removes previously created task---------------------------------------------------
 
-#using taskname
-$taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
-Write-Host $taskexist
+
+#import shared functions
+Import-Module .\Functions.psm1
+$Config = select-xml -Path "$PSScriptRoot\config.xml" -XPath "//config" | Select-Object -ExpandProperty "node"
+
+#checks if task exists
+$taskexist = Get-ScheduledTask -TaskName $Config.general.taskname -ErrorAction Ignore
+#removes task if it exists
 if($taskexist){
-  Unregister-ScheduledTask -TaskName $taskname -Confirm:$false
+  Unregister-ScheduledTask -TaskName $Config.general.taskname -Confirm:$false
 }
 
-#---------------------------------------------------------------------------------------------------------------------------
+#creates the credentials for the script
+if ($UserName -notlike $null -and $SecuredPass -notlike $null){
+    $ConvertedPassword = ConvertTo-SecureString $SecuredPass
+    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $UserName,$ConvertedPassword 
+}else{
+    $credential = Get-Credential
+}
 
 
-    $credential = $null
-    if ($uname -notlike $null -and $pass -notlike $null){
-        $upass = ConvertTo-SecureString $pass
-        $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $uname,$upass 
-    }else{
-        $credential = Get-Credential
+#trys to connect to AD. If it fails it repeats asking for credentiasl
+$success = $false
+do{
+    try{
+        $addCompItems = @{
+            DomainName = $Config.general.domain
+            NewName = $ComputerName
+            Credential = $credential
+            Restart = $true
+            ErrorAction = "stop"      
+        }
+        Add-Computer @addCompItems
+        $success = $true
+    }catch{
+        write-error -Message $_
+        Write-host "Please insert Credentials again or end the program"
+
+        $credential = Get-Credential -UserName $UserName
     }
-    Add-Computer -DomainName "pace.edu" -NewName $compName -Credential $credential -restart 
+       
+} until ($success)
 
-    #this might contain errors.
-    #TODO:find a error correction portion
-    Write-host "An error has occured" -ForegroundColor Red
-    $compName = read-host -prompt "Please get the computername for the new computer. CHECK AD!" 
-    add-Computer -DomainName "pace.edu" -NewName $compname -restart
+
+
+Write-host "CONGRATULATIONS YOU HAVE COMPLETED THE SET UP!!!!!!!!" -ForegroundColor Green
 
 
 

@@ -1,2 +1,0 @@
--python or native powershell gui automation
-	if not possible integrate the autoit script directly into 

@@ -1,155 +1,96 @@
-﻿
-param([switch]$Elevated,               
-[string]$taskname = "programsdrivers",  
-[switch]$AddAD                         
-)
-function Confirm-Admin{
-    #checks to see if user is admin
-    $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
-    $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
-}
+﻿#Requires -RunAsAdministrator
+
+[CmdletBinding()]
+param()
+
+#functions stored here
+Import-Module .\Functions.psm1
+#loads in configuration file
+$Config = select-xml -Path .\config.xml -XPath "//config" | Select-Object -ExpandProperty "node"
 
 
-function Confirm-Installed( $programName ) {
-    Get-CMIObject -Query "SELECT * FROM Win32_Product Where Name Like '$programName'" | 
-    measure-object -Sum
-}
 
-function Bitlocker_status{
-    $BLactive = Get-Bitlockervolume -MountPoint "C:"
-    if($BLactive.ProtectionStatus -eq 'On' -and $BLactive.EncryptionPercentage -eq '100'){
-       return $true
-    }else{
-        return $false
-    }
-}
+Write-Verbose -Message "Script Currently running in: $PSScriptRoot"
 
-if ((Confirm-Admin) -eq $false)  {
-    if ($elevated){
-        Write-Error "Failed to elevate session" 
-    }else {
-        $arguments = @{
-            noprofile = $true
-            noexit = $true
-            file = "{0}"
-            elevated = $true
-            f = $myinvocation.MyCommand.Definition
-        }
-        Start-Process powershell.exe -Verb RunAs -ArgumentList @arguments
-    }
-    exit
-}
+#Check to see if computer is to be add to active directory/renamed
+$yesList = @("yes","y")
+$noList = @("no","n")
+do{
+    $addADresponse = Read-Host -Prompt "Do you want to add the computer to Active Directory (Yes/No)"
+}while(($addADresponse -notin $yesList) -and ($addADresponse -notin $noList))
 
 
-Write-Debug $PSScriptRoot
-Set-Location $PSScriptRoot
-
-if ($AddAD){
-    $userCred = Get-Credential
-    $uname = $userCred.UserName
-    $pass = Convertfrom-securestring $userCred.Password 
-    $compName = read-host -prompt "Please get the computername for the new computer. CHECK AD!"
-    $taskexist = Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore
+#creates scheduled task to add computer to AD at logon
+if($addADresponse -in $yesList){
+    $computerName = Read-Host -Prompt "Please enter the name of the computer"
+    $credentials = Get-Credential
     
-    
-    
-    if (!$taskexist){
-        Write-Verbose "Creating New Task"
-        $arguments = @{
-            noexit = $true
-            ExecutionPolicy = Bypass
-            Command = "$PSScriptRoot\SetupAD.ps1"
-            taskname = $taskname
-            CompName = $compName 
-            uname =  $uname 
-            pass =  $pass
-        }
+    $filePath = "$PSScriptRoot\SetupAD.ps1"
+    $program = "powershell.exe"
+
+    $uname = $credentials.UserName
+    $pass = ConvertFrom-SecureString $credentials.Password
         
-        
-        
-        $task = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument @arguments
-        $trigger = New-ScheduledTaskTrigger -AtLogOn
-        # TODO get auto deleteing working after one run
-        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-         
-        Register-ScheduledTask -Action $task -Trigger $trigger -TaskName $taskname -Settings $settings -Description "runs to install programs and drivers" -RunLevel Highest
-        Write-Host "task created"
-    }
-   
+    $taskArguments  = "$FilePath -ComputerName $ComputerName -UserName $uname -SecuredPass $pass"
+    $programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
+    
+    Add-LogonTask -Program $program -Argument $programArguments -taskname $Config.general.taskname
 }
 
-#name of downloaded program
-$ProgInstaller = "ninite.exe"
-write-host "Ninite downloading starting"
+
+#downloads ninite
+$program = Invoke-Download -url $Config.url.ninite -name "Ninite.exe"
+
+#runs executable that when it sees the ninite app will automat the install of it
+Start-Process -FilePath "$PSScriptRoot\niniteauto.exe" -WarningAction "SilentlyContinue"
+
+Write-Verbose -Message "Ninite started installing"
+
+#runs ninite executable
+Start-Process -FilePath .\$program -wait -WarningAction "SilentlyContinue"
 
 
-$ProgressPreference = 'silentlyContinue'    # removes the progress bar for download because slows downlaod
-
-#downloads ninite installer (TODO: figure out a selector of sorts order for part below does not matter)
-$uri = 'https://ninite.com/.net4.7.2-7zip-air-chrome-firefox-java8-shockwave-silverlight-vlc/ninite.exe'
-Invoke-WebRequest -outf $ProgInstaller -Uri $uri
+Write-Verbose -Message "Ninite successfully installed"
+Write-Verbose -Message "Checking if Dell Command is installed"
 
 
-$ProgressPreference = 'continue'    #returns to normal operation
-write-host "Download finished"
 
+#Installs Dell Command if Not Installed
+if(!(Confirm-Installed -programName 'Dell Command | Update')){
+    Write-Verbose -Message "Dell Command not installed, Installing now"
+    Write-Verbose -Message "Downloading Dell Command Update"
 
-Start-Process ".\niniteauto.exe" -WarningAction SilentlyContinue 
+    $program = Invoke-Download -url $Config.url.dellCommand -name "DellCommand.exe" 
 
-Write-Verbose "Ninite started installing"
+    Write-Verbose -Message "successfully finished downloading Dell Command Update"
+    Write-Verbose -Message "Installing Dell Command Update"
 
-
-Start-Process .\$ProgInstaller -wait -WarningAction SilentlyContinue
-
-Write-Verbose "Ninite successfully installed"
-
-Write-Verbose "Checking if Dell Command is installed"
-
-if(Confirm-Installed('Dell Command | Update') -eq 0){
-    $DellC = "dellcommand.exe"
-    Write-Verbose "Downloading Dell Command Update"
+    Start-Process -FilePath .\$program -WarningAction "SilentlyContinue" -Wait -ArgumentList "/s" #runs dell C|U silently
     
-    $ProgressPreference = 'silentlyContinue'   
-    
-    #downloads dellcommand and names it
-    Invoke-WebRequest -outf $DellC https://downloads.dell.com/FOLDER05055451M/1/Dell-Command-Update_DDVDP_WIN_2.4.0_A00.EXE 
-    
-    
-    $ProgressPreference = 'continue'    
-    Write-Verbose "successfully finished downloading Dell Command Update"
-    Write-Verbose "Installing Dell Command Update"
+    Write-Verbose -Message "setting up install"
 
-    
-    Start-Process $DellC -WarningAction SilentlyContinue -Wait -ArgumentList "/s"
-    
-    #alls windows to update that it exists
-    Write-Verbose "setting up install"
-    
-    Start-Sleep 10 #gives windows time update that dell command exists
-    
+    Start-Sleep 10  #gives windows time update that dell command exists   
 }
 
-if(Bitlocker_status){
-    
+if(Get-BitLockerStatus){ # suspends bitlocker incase bios updates are in order to prevent the drive from locking up
     Suspend-BitLocker -MountPoint "C:" -RebootCount 0
-    Write-Verbose "bitlocker suspended"
+    Write-Verbose -Message "bitlocker suspended"
 
     invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /reboot /log C:\"
     
     Resume-BitLocker -MountPoint "C:"
-    
-    
-    if (Bitlocker_status){
-        Write-Verbose "Bitlocker reactivated"
+
+    if (Get-BitLockerStatus){
+        Write-Verbose -Message "Bitlocker reactivated"
     }else{
-        Write-Verbose "bitlocker reactivation failed"
+        Write-Verbose -Message "bitlocker reactivation failed"
     }
-    Write-Host 'Install Finished' -ForegroundColor Green
+    
 }else{
 
-    
-    invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /log C:\"
-    
-    Restart-Computer
+    invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /reboot /log C:\"
 }
+Write-Host 'Done with drivers and Basic programs' -ForegroundColor "Green"
+
+Restart-Computer
 
