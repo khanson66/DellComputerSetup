@@ -23,7 +23,7 @@ do{
 #creates scheduled task to add computer to AD at logon
 if($addADresponse -in $yesList){
     $computerName = Read-Host -Prompt "Please enter the name of the computer"
-    $credentials = Get-Credential
+    $credentials = Get-Credential -Message "Please enter your credentials in"
     
     $filePath = "$PSScriptRoot\SetupAD.ps1"
     $program = "powershell.exe"
@@ -34,7 +34,7 @@ if($addADresponse -in $yesList){
     $taskArguments  = "$FilePath -ComputerName $ComputerName -UserName $uname -SecuredPass $pass"
     $programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
     
-    Add-LogonTask -Program $program -Argument $programArguments -taskname $Config.general.taskname
+    Add-LogonTask -Program $program -Arguments $programArguments -TaskName $Config.general.taskname
 }
 
 
