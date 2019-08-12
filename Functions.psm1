@@ -59,28 +59,28 @@ function Add-LogonTask {
 
         if ($taskexist){
             #only skips because existing task could delete an already existing task
-            write-Verbose -Message "Removing existing step"
-        }else{
-            Write-Verbose -Message "Creating New Task"
-
-            $task = New-ScheduledTaskAction -Execute $program -Argument $Arguments
-            $trigger = New-ScheduledTaskTrigger -AtLogOn
-
-            $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-            
-            $registerArguments = @{
-                action = $task
-                trigger = $trigger
-                taskname = $taskname
-                settings = $settings
-                description = "runs on script on reboot"
-                runlevel = "Highest"
-            }
-
-            Register-ScheduledTask @registerArguments           
-            
-            Write-Verbose -Message "task created"
+            write-Verbose -Message "Removing existing schedule test"
         }
+        Write-Verbose -Message "Creating New Task"
+
+        $task = New-ScheduledTaskAction -Execute $program -Argument $Arguments
+        $trigger = New-ScheduledTaskTrigger -AtLogOn
+
+        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+        
+        $registerArguments = @{
+            action = $task
+            trigger = $trigger
+            taskname = $taskname
+            settings = $settings
+            description = "runs on script on reboot"
+            runlevel = "Highest"
+        }
+
+        Register-ScheduledTask @registerArguments           
+        
+        Write-Verbose -Message "task created"
+        
        
     }
     
