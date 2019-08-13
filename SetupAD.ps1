@@ -38,7 +38,6 @@ do{
     try{
         $addCompItems = @{
             DomainName = $Config.general.domain
-            NewName = $ComputerName
             Credential = $credential
             Restart = $true
             ErrorAction = "stop"      

@@ -31,7 +31,7 @@ if($addADresponse -in $yesList){
     $uname = $credentials.UserName
     $pass = ConvertFrom-SecureString $credentials.Password
         
-    $taskArguments  = "$FilePath -ComputerName $ComputerName -UserName $uname -SecuredPass $pass -Path $PSScriptRoot"
+    $taskArguments  = "$FilePath -UserName $uname -SecuredPass $pass -Path $PSScriptRoot"
     $programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
     
     Add-LogonTask -Program $program -Arguments $programArguments -TaskName $Config.general.taskname
@@ -70,6 +70,10 @@ if(!(Confirm-Installed -programName 'Dell Command | Update')){
     Write-Verbose -Message "setting up install"
 
     Start-Sleep 10  #gives windows time update that dell command exists   
+}
+
+if($null -ne $computerName -or "" -ne $computerName){
+    Rename-Computer -NewName $computerName -Force
 }
 
 if(Get-BitLockerStatus){ # suspends bitlocker incase bios updates are in order to prevent the drive from locking up
