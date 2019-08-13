@@ -31,7 +31,7 @@ if($addADresponse -in $yesList){
     $uname = $credentials.UserName
     $pass = ConvertFrom-SecureString $credentials.Password
         
-    $taskArguments  = "$FilePath -ComputerName $ComputerName -UserName $uname -SecuredPass $pass"
+    $taskArguments  = "$FilePath -ComputerName $ComputerName -UserName $uname -SecuredPass $pass -Path $PSScriptRoot"
     $programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
     
     Add-LogonTask -Program $program -Arguments $programArguments -TaskName $Config.general.taskname

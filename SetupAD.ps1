@@ -6,12 +6,14 @@ param(
     [string] #All ready coming is as secure string that is in string form
     $SecuredPass,
     [string] 
-    $UserName
+    $UserName,
+    [string]
+    $Path
 )
 
 
 #import shared functions
-Import-Module .\Functions.psm1
+Import-Module $Path\Functions.psm1
 $Config = select-xml -Path "$PSScriptRoot\config.xml" -XPath "//config" | Select-Object -ExpandProperty "node"
 
 #checks if task exists
