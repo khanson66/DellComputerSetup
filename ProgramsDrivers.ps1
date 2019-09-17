@@ -25,13 +25,29 @@ if($addADresponse -in $yesList){
     $computerName = Read-Host -Prompt "Please enter the name of the computer"
     $credentials = Get-Credential -Message "Please enter your credentials in"
     
+    Write-Host -Object "What OU would you like to add the machine:"
+    $i = 1
+    foreach($ou in $Config.location.ou.name){
+        Write-Host -Object "$i) $ou"
+        $i++
+    }
+    Write-Host -Object "$i) Default OU/Other"
+    $OUResponse = Read-Host -Prompt ">"
+    if($OUResponse -ge $i -or $OUResponse -le 0){
+        $ou = "default"
+    }else{
+        $ou = $Config.location.ou[$OUResponse-1]
+    }
+    
+    
     $filePath = "$PSScriptRoot\SetupAD.ps1"
     $program = "powershell.exe"
 
     $uname = $credentials.UserName
     $pass = ConvertFrom-SecureString $credentials.Password
         
-    $taskArguments  = "$FilePath -UserName $uname -SecuredPass $pass -Path $PSScriptRoot"
+    $taskArguments  = "$FilePath -UserName $uname -SecuredPass $pass -Path $PSScriptRoot -OU"
+    
     $programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
     
     Add-LogonTask -Program $program -Arguments $programArguments -TaskName $Config.general.taskname

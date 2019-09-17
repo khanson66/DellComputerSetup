@@ -8,7 +8,9 @@ param(
     [string] 
     $UserName,
     [string]
-    $Path
+    $Path,
+    [string]
+    $OU
 )
 
 
@@ -40,7 +42,10 @@ do{
             DomainName = $Config.general.domain
             Credential = $credential
             Restart = $true
-            ErrorAction = "stop"      
+            ErrorAction = "stop"     
+        }
+        if ($OU -ne "default"){
+            $addCompItems.Add("OUPath",$OU)
         }
         Add-Computer @addCompItems
         $success = $true
