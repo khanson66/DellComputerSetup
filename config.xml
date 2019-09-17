@@ -5,6 +5,9 @@
     </url>
     <general>
         <taskname>ComputerSetup</taskname>
-        <domain>pace.edu</domain>
+        <domain>example.com</domain>
     </general>
+    <location>
+        <ou>OU=Example,OU=is,OU=This,DC=example,DC=com</ou>
+    </location>
 </config>

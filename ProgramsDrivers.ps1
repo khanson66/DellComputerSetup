@@ -8,34 +8,22 @@ Import-Module .\Functions.psm1
 #loads in configuration file
 $Config = select-xml -Path .\config.xml -XPath "//config" | Select-Object -ExpandProperty "node"
 
-
-
 Write-Verbose -Message "Script Currently running in: $PSScriptRoot"
 
-#Check to see if computer is to be add to active directory/renamed
-$yesList = @("yes","y")
-$noList = @("no","n")
-do{
-    $addADresponse = Read-Host -Prompt "Do you want to add the computer to Active Directory (Yes/No)"
-}while(($addADresponse -notin $yesList) -and ($addADresponse -notin $noList))
+$computerName = Read-Host -Prompt "Please enter the name of the computer"
+$credentials = Get-Credential -Message "Please enter your credentials in"
 
+$filePath = "$PSScriptRoot\SetupAD.ps1"
+$program = "powershell.exe"
 
-#creates scheduled task to add computer to AD at logon
-if($addADresponse -in $yesList){
-    $computerName = Read-Host -Prompt "Please enter the name of the computer"
-    $credentials = Get-Credential -Message "Please enter your credentials in"
+$uname = $credentials.UserName
+$pass = ConvertFrom-SecureString $credentials.Password
     
-    $filePath = "$PSScriptRoot\SetupAD.ps1"
-    $program = "powershell.exe"
+$taskArguments  = "$FilePath -UserName $uname -SecuredPass $pass -Path $PSScriptRoot"
+$programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
 
-    $uname = $credentials.UserName
-    $pass = ConvertFrom-SecureString $credentials.Password
-        
-    $taskArguments  = "$FilePath -UserName $uname -SecuredPass $pass -Path $PSScriptRoot"
-    $programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
-    
-    Add-LogonTask -Program $program -Arguments $programArguments -TaskName $Config.general.taskname
-}
+Add-LogonTask -Program $program -Arguments $programArguments -TaskName $Config.general.taskname
+
 
 
 #downloads ninite

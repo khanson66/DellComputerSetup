@@ -40,7 +40,8 @@ do{
             DomainName = $Config.general.domain
             Credential = $credential
             Restart = $true
-            ErrorAction = "stop"      
+            ErrorAction = "stop"  
+            OUPath = $Config.general.ou
         }
         Add-Computer @addCompItems
         $success = $true
