@@ -6,7 +6,7 @@ param()
 #functions stored here
 Import-Module .\Functions.psm1
 #loads in configuration file
-$Config = select-xml -Path .\config.xml -XPath "//config" | Select-Object -ExpandProperty "node"
+$Config = Get-Content ".\config.json"| ConvertFrom-Json
 
 
 

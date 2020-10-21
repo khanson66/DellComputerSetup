@@ -16,7 +16,7 @@ param(
 
 #import shared functions
 Import-Module $Path\Functions.psm1
-$Config = select-xml -Path "$PSScriptRoot\config.xml" -XPath "//config" | Select-Object -ExpandProperty "node"
+$Config = Get-Content ".\config.json"| ConvertFrom-Json
 
 #checks if task exists
 $taskexist = Get-ScheduledTask -TaskName $Config.general.taskname -ErrorAction Ignore

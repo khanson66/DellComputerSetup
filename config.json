@@ -1,0 +1,20 @@
+{
+    "url": {
+       "ninite": "https://ninite.com/.net4.7.2-7zip-adoptjava8-adoptjavax11-adoptjavax8-air-chrome-firefox-silverlight-vlc/ninite.exe",
+       "dellCommand": "https://downloads.dell.com/FOLDER05055451M/1/Dell-Command-Update_DDVDP_WIN_2.4.0_A00.EXE"
+    },
+    "general": {
+       "taskname": "ComputerSetup",
+       "domain": "example.com"
+    },
+    "location": [
+       {
+          "name": "Example1",
+          "path": "OU=Example1,OU=This,DC=Example,DC=com"
+       },
+       {
+          "name": "Example2",
+          "path": "OU=Example2,OU=This,DC=Example,DC=com"
+       }
+    ]
+ }
