@@ -9,7 +9,6 @@ Import-Module .\Functions.psm1
 $Config = Get-Content ".\config.json"| ConvertFrom-Json
 
 
-
 Write-Verbose -Message "Script Currently running in: $PSScriptRoot"
 
 #Check to see if computer is to be add to active directory/renamed
@@ -23,7 +22,7 @@ do{
 #creates scheduled task to add computer to AD at logon
 if($addADresponse -in $yesList){
     $computerName = Read-Host -Prompt "Please enter the name of the computer"
-    $credentials = Get-Credential -Message "Please enter your credentials in"
+    $credentials = Get-Credential -Message "Please enter your admin credentials in"
     
     Write-Host -Object "What OU would you like to add the machine:"
     $i = 1
@@ -96,19 +95,19 @@ if(Get-BitLockerStatus){ # suspends bitlocker incase bios updates are in order t
     Suspend-BitLocker -MountPoint "C:" -RebootCount 0
     Write-Verbose -Message "bitlocker suspended"
 
-    invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /reboot /log C:\"
+    invoke-expression $Config.general.runCommandUpdate
     
     Resume-BitLocker -MountPoint "C:"
 
     if (Get-BitLockerStatus){
         Write-Verbose -Message "Bitlocker reactivated"
     }else{
-        Write-Verbose -Message "bitlocker reactivation failed"
+        Write-Error -Message "bitlocker reactivation failed"
     }
     
 }else{
 
-    invoke-expression "C:\'Program Files (x86)'\Dell\CommandUpdate\dcu-cli.exe /reboot /log C:\"
+    invoke-expression $Config.general.runCommandUpdate
 }
 Write-Host 'Done with drivers and Basic programs' -ForegroundColor "Green"
 

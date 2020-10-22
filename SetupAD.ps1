@@ -61,7 +61,7 @@ do{
 
 
 Write-host "CONGRATULATIONS YOU HAVE COMPLETED THE SET UP!!!!!!!!" -ForegroundColor Green
-
+Read-Host
 
 
 
