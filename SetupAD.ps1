@@ -16,7 +16,7 @@ param(
 
 #import shared functions
 Import-Module $Path\Functions.psm1
-$Config = Get-Content ".\config.json"| ConvertFrom-Json
+$Config = Get-Content "$PSScriptRoot\config.json"| ConvertFrom-Json
 
 #checks if task exists
 $taskexist = Get-ScheduledTask -TaskName $Config.general.taskname -ErrorAction Ignore
@@ -51,7 +51,7 @@ do{
         $success = $true
     }catch{
         write-error -Message $_
-        Write-host "Please insert Credentials again or end the program"
+        Write-Host -Message "[!] Error: Please insert Credentials again or end the program"
 
         $credential = Get-Credential -UserName $UserName
     }
@@ -61,9 +61,3 @@ do{
 
 
 Write-host "CONGRATULATIONS YOU HAVE COMPLETED THE SET UP!!!!!!!!" -ForegroundColor Green
-Read-Host
-
-
-
-
- 
