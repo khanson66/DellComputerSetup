@@ -4,9 +4,11 @@
         "dellCommand": "https://dl.dell.com/FOLDER06747944M/1/Dell-Command-Update-Application_0W0YJ_WIN_4.0.0_A00.EXE"
     },
     "general": {
+        "isLab": false,
         "taskname": "ComputerSetup",
         "domain": "example.com",
-        "runCommandUpdate": "C:\\Program Files (x86)\\Dell\\Command Update\\dcu-cli.exe /reboot /log C:/"
+        "CommandUpdatePath": "C:\\Program Files (x86)\\Dell\\CommandUpdate\\dcu-cli.exe",
+        "CommandUpateArgs": "/applyUpdates -reboot=enable"
     },
     "location": [{
             "name": "Example1",
