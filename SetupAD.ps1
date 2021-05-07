@@ -42,12 +42,12 @@ do{
             DomainName = $Config.general.domain
             Credential = $credential
             Restart = $true
-            ErrorAction = "stop"     
+            ErrorAction = "stop"
         }
         if ($OU -ne "default"){
-            $addCompItems.Add("OUPath",$OU)
+            $addCompItems.Add("OUPath","$OU")
         }
-        Add-Computer @addCompItems
+        Add-Computer @addCompItems 
         $success = $true
     }catch{
         write-error -Message $_

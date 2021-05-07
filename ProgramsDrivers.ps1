@@ -23,6 +23,7 @@ write-host "[*] Info: Testing network connection"
 $error_count = 0
 while(!(Test-Connection -ComputerName 8.8.8.8 -Quiet)){
     if($error_count -eq 4){
+        Write-Host "[!] Error: Can't internet exiting now" -ForegroundColor Red
         exit(1)
     }
     Write-Host "[!] Error: Can't connect to the internet" -ForegroundColor Red
@@ -47,7 +48,7 @@ if($addADresponse -in $yesList){
     if($OUResponse -ge $i -or $OUResponse -le 0){
         $ou = "default"
     }else{
-        $ou = $Config.location[$OUResponse-1]
+        $ou = $Config.location[$OUResponse-1].path
     }
     
     $filePath = "$PSScriptRoot\SetupAD.ps1"
@@ -56,11 +57,16 @@ if($addADresponse -in $yesList){
     $uname = $credentials.UserName
     $pass = ConvertFrom-SecureString $credentials.Password
         
-    $taskArguments  = "$FilePath -UserName $uname -SecuredPass $pass -Path $PSScriptRoot -OU $ou"
+    $taskArguments  = "$FilePath -UserName $uname -SecuredPass $pass -Path $PSScriptRoot -OU '$ou'"
     
     $programArguments = "-noexit -ExecutionPolicy Bypass -Command ""$taskArguments"""
     
     Add-LogonTask -Program $program -Arguments $programArguments -TaskName $Config.general.taskname
+}else{
+    $response = Read-Host -Prompt "Do you want to rename the computer"
+    if($response -in $yesList){
+        
+    }
 }
 
 #downloads ninite
@@ -105,7 +111,7 @@ if(Get-BitLockerStatus){ # suspends bitlocker incase bios updates are in order t
     Suspend-BitLocker -MountPoint "C:" -RebootCount 0
     Write-Host "[*] Info: bitlocker suspended"
 
-    invoke-expression $Config.general.runCommandUpdate
+    start-process -FilePath $Config.general.CommandUpdatePath -ArgumentList $Config.general.CommandUpateArgs -Wait
     
     Resume-BitLocker -MountPoint "C:"
 
@@ -117,7 +123,7 @@ if(Get-BitLockerStatus){ # suspends bitlocker incase bios updates are in order t
     
 }else{
 
-    invoke-expression $Config.general.runCommandUpdate
+    start-process -FilePath $Config.general.CommandUpdatePath -ArgumentList $Config.general.CommandUpateArgs -Wait
 }
 Write-Host 'Done with drivers and Basic programs' -ForegroundColor "Green"
 
